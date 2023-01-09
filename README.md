@@ -12,3 +12,6 @@ To add your chain, you need to change the `load_chain` function in `app.py`.
 Depending on the type of your chain, you may also need to change the inputs/outputs that occur later on (in the `chat` function).
 
 ## Deploying to Hugging Face spaces
+To deploy to Hugging Face spaces, you should first create a new Gradio space on Hugging Face.
+From there, you can then copy over the `app.py` file here, and the `requirements.txt`.
+Do not copy over this ReadMe - Hugging Face spaces requires a ReadMe in a particular format.
