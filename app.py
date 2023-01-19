@@ -95,8 +95,8 @@ with block:
     state = gr.State()
     agent_state = gr.State()
 
-    submit.click(chat, inputs=[set_openai_api_key, message, state, agent_state], outputs=[chatbot, state])
-    message.submit(chat, inputs=[set_openai_api_key, message, state, agent_state], outputs=[chatbot, state])
+    submit.click(chat, inputs=[openai_api_key_textbox, message, state, agent_state], outputs=[chatbot, state])
+    message.submit(chat, inputs=[openai_api_key_textbox, message, state, agent_state], outputs=[chatbot, state])
 
     openai_api_key_textbox.change(
         set_openai_api_key,
