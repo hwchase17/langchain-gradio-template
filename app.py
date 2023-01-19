@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import gradio as gr
 from langchain.chains import ConversationChain
 from langchain.llms import OpenAI
+from threading import Lock
 
 
 def load_chain():
@@ -24,21 +25,34 @@ def set_openai_api_key(api_key: str):
         os.environ["OPENAI_API_KEY"] = ""
         return chain
 
+class ChatWrapper:
 
-def chat(
-    inp: str, history: Optional[Tuple[str, str]], chain: Optional[ConversationChain]
-):
-    """Execute the chat functionality."""
-    history = history or []
-    # If chain is None, that is because no API key was provided.
-    if chain is None:
-        history.append((inp, "Please paste your OpenAI key to use"))
+    def __init__(self):
+        self.lock = Lock()
+    def __call__(
+        self, api_key: str, inp: str, history: Optional[Tuple[str, str]], chain: Optional[ConversationChain]
+    ):
+        """Execute the chat functionality."""
+        self.lock.acquire()
+        try:
+            history = history or []
+            # If chain is None, that is because no API key was provided.
+            if chain is None:
+                history.append((inp, "Please paste your OpenAI key to use"))
+                return history, history
+            # Set OpenAI key
+            import openai
+            openai.api_key = api_key
+            # Run chain and append input.
+            output = chain.run(input=inp)
+            history.append((inp, output))
+        except Exception as e:
+            raise e
+        finally:
+            self.lock.release()
         return history, history
-    # Run chain and append input.
-    output = chain.run(input=inp)
-    history.append((inp, output))
-    return history, history
 
+chat = ChatWrapper()
 
 block = gr.Blocks(css=".gradio-container {background-color: lightgray}")
 
@@ -81,8 +95,8 @@ with block:
     state = gr.State()
     agent_state = gr.State()
 
-    submit.click(chat, inputs=[message, state, agent_state], outputs=[chatbot, state])
-    message.submit(chat, inputs=[message, state, agent_state], outputs=[chatbot, state])
+    submit.click(chat, inputs=[set_openai_api_key, message, state, agent_state], outputs=[chatbot, state])
+    message.submit(chat, inputs=[set_openai_api_key, message, state, agent_state], outputs=[chatbot, state])
 
     openai_api_key_textbox.change(
         set_openai_api_key,
